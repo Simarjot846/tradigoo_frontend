@@ -1,58 +1,69 @@
-import { createServiceClient } from "@/lib/supabase-server";
-import { notFound } from "next/navigation";
+"use client";
+
+import { createClient } from "@/lib/supabase-client";
+import { notFound, useParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Package, Calendar, Tag, ShieldCheck, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
-// Force dynamic since we read DB
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// Client component, no server exports like dynamic/revalidate needed here
 
-export default async function VerifyOrderPage({ params }: { params: Promise<{ orderId: string }> }) {
-    const { orderId } = await params;
-    // Use Service Client to bypass RLS since this is a public verification page
-    // ensuring we only fetch specific safe fields in the query below
-    const supabase = createServiceClient();
+export default function VerifyOrderPage() {
+    const params = useParams();
+    const orderId = params?.orderId as string;
+    const [order, setOrder] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
-    interface OrderVerifyData {
-        id: string;
-        quantity: number;
-        total_amount: number;
-        product: {
-            name: string;
-            description: string;
-            batch_number: string;
-            expiry_date: string;
-            expected_margin: number;
-        } | null;
-        seller: {
-            business_name: string;
-            gst_verified: boolean;
-        } | null;
+    useEffect(() => {
+        if (!orderId) return;
+
+        async function fetchOrder() {
+            try {
+                const supabase = createClient();
+                const { data: orderData, error } = await supabase
+                    .from("orders")
+                    .select(`
+                      *,
+                      product:products!product_id (
+                        name,
+                        description,
+                        batch_number,
+                        expiry_date,
+                        expected_margin
+                      ),
+                      seller:profiles!seller_id (
+                        business_name,
+                        gst_verified
+                      )
+                    `)
+                    .eq("id", orderId)
+                    .single();
+
+                if (error || !orderData) {
+                    setError(true);
+                } else {
+                    setOrder(orderData);
+                }
+            } catch (err) {
+                setError(true);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchOrder();
+    }, [orderId]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-black text-white flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+            </div>
+        );
     }
-
-    // Fetch Order + Product Details
-    const { data: orderData, error } = await supabase
-        .from("orders")
-        .select(`
-      *,
-      product:products!product_id (
-        name,
-        description,
-        batch_number,
-        expiry_date,
-        expected_margin
-      ),
-      seller:profiles!seller_id (
-        business_name,
-        gst_verified
-      )
-    `)
-        .eq("id", orderId)
-        .single();
-
-    const order = orderData as unknown as OrderVerifyData;
 
     if (error || !order) {
         return (

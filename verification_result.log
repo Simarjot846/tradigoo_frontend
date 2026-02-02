@@ -1,0 +1,5 @@
+
+> tradigoo@0.1.0 type-check
+> tsc --noEmit
+
+app/verify/[orderId]/page.tsx(1,10): error TS2305: Module '"@/lib/supabase-server"' has no exported member 'createServiceClient'.

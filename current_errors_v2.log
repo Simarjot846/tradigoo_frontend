@@ -1,0 +1,10 @@
+
+> tradigoo@0.1.0 type-check
+> tsc --noEmit
+
+app/auth/callback/route.ts(1,30): error TS2307: Cannot find module '@/lib/supabase-server' or its corresponding type declarations.
+app/dispute/[id]/page.tsx(13,50): error TS2307: Cannot find module '@/lib/fraud-detection' or its corresponding type declarations.
+app/dispute/[id]/page.tsx(156,71): error TS7006: Parameter 'flag' implicitly has an 'any' type.
+app/dispute/[id]/page.tsx(156,77): error TS7006: Parameter 'i' implicitly has an 'any' type.
+app/verify/[orderId]/page.tsx(1,37): error TS2307: Cannot find module '@/lib/supabase-server' or its corresponding type declarations.
+lib/trust-score.ts(1,30): error TS2307: Cannot find module '@/lib/supabase-server' or its corresponding type declarations.
