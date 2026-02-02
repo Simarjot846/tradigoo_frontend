@@ -271,3 +271,4 @@ Built with ❤️ for Indian retailers who deserve better tools to grow their bu
 ---
 
 **Made for Hackathons | Ready to Demo | Production-Ready Architecture**
+# Tradigo-frontend
