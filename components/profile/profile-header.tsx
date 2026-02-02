@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Camera, ShieldCheck, TrendingUp, Building2, MapPin } from 'lucide-react';
-import { createClient } from '@/lib/supabase-client';
+
 import { toast } from 'sonner';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -35,59 +35,40 @@ export function ProfileHeader({ profile, onUpdate }: ProfileHeaderProps) {
             const fileName = `${Math.random()}.${fileExt}`;
             const filePath = `${user?.id}/${fileName}`;
 
-            const supabase = createClient();
+          const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+        setUploading(true);
 
-            // 1. Upload to 'avatars' bucket (ensure this bucket exists or use 'public')
-            // For now assuming 'dispute-evidence' or a new 'profiles' bucket. 
-            // Let's use 'dispute-evidence' for now as we know it exists, but ideally create 'avatars'
-            // or just store in a general bucket. 
-            // ACTUALLY: Let's assume there is a 'avatars' bucket or we use 'dispute-evidence' temporarily
-            // User requested "Profile Photo ... upload (Supabase Storage)".
-            // I'll try 'avatars' first, if fails handle error. 
-            // Better yet, let's use a standard name.
+        if (!event.target.files || event.target.files.length === 0) return;
 
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(filePath, file);
+        const file = event.target.files[0];
 
-            if (uploadError) {
-                // Fallback to 'dispute-evidence' for demo if 'avatars' missing
-                // This is a bit hacky but keeps flow moving if user hasn't made bucket
-                throw uploadError;
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("userId", user?.id || "");
+
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/profile/upload-avatar`,
+            {
+                method: "POST",
+                body: formData,
             }
+        );
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(filePath);
+        if (!res.ok) throw new Error("Upload failed");
 
-            // 2. Update profile
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ profile_image_url: publicUrl })
-                .eq('id', user?.id);
+        const { imageUrl } = await res.json();
 
-            if (updateError) throw updateError;
+        toast.success("Profile photo updated!");
+        onUpdate();
 
-            toast.success('Profile photo updated!');
-            onUpdate();
+    } catch (err: any) {
+        toast.error(err.message || "Upload failed");
+    } finally {
+        setUploading(false);
+    }
+};
 
-        } catch (error: any) {
-            console.error('Error uploading avatar:', error);
-
-            // robustness check: verify if bucket exists
-            const supabase = createClient(); // Re-initialize supabase client if not already in scope
-            const { error: bucketCheckError } = await supabase.storage.getBucket('avatars');
-
-            if (bucketCheckError) {
-                // If we can't find the bucket, it's definitely missing or we have no permission
-                setShowBucketError(true);
-            } else {
-                toast.error(error.message || 'Failed to upload photo. Please try again.');
-            }
-        } finally {
-            setUploading(false);
-        }
-    };
 
     return (
         <div className="relative rounded-3xl bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/5 p-8 backdrop-blur-xl overflow-hidden mb-8 shadow-sm dark:shadow-none transition-colors duration-300">

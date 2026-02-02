@@ -1,42 +1,41 @@
 "use client";
 
-import { useAuth } from "@/lib/auth-context";
-import dynamic from 'next/dynamic';
-import { Skeleton } from "@/components/ui/skeleton";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 
-// Lazy Load Dashboards
-const BuyerDashboard = dynamic(() => import('@/components/dashboard/buyer-dashboard').then(mod => mod.BuyerDashboard), {
-  loading: () => <DashboardSkeleton />,
-});
-const SellerDashboard = dynamic(() => import('@/components/dashboard/seller-dashboard').then(mod => mod.SellerDashboard), {
-  loading: () => <DashboardSkeleton />,
-});
+// Lazy dashboards
+const BuyerDashboard = dynamic(
+  () => import("@/components/dashboard/buyer-dashboard").then((m) => m.BuyerDashboard),
+  { loading: () => <DashboardSkeleton /> }
+);
+
+const SellerDashboard = dynamic(
+  () => import("@/components/dashboard/seller-dashboard").then((m) => m.SellerDashboard),
+  { loading: () => <DashboardSkeleton /> }
+);
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
   const router = useRouter();
+  const [role, setRole] = useState<string | null>(null);
 
-  // Redirect to login if not authenticated and not loading
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login');
-    }
-  }, [user, loading, router]);
+    const token = localStorage.getItem("token");
+    const savedRole = localStorage.getItem("role");
 
-  // Show skeleton if loading
-  if (loading) {
+    if (!token) {
+      router.push("/auth/login");
+      return;
+    }
+
+    setRole(savedRole);
+  }, [router]);
+
+  if (!role) {
     return <DashboardSkeleton />;
   }
 
-  // If not loading but no user, it means we are unauthenticated or about to redirect
-  if (!user) {
-    return <DashboardSkeleton />; // Show skeleton while redirecting or if unauthenticated
-  }
-
-  // Strict Role-Based Rendering
-  if (user.role === 'wholesaler') {
+  if (role === "wholesaler") {
     return (
       <Suspense fallback={<DashboardSkeleton />}>
         <SellerDashboard />
@@ -44,7 +43,6 @@ export default function DashboardPage() {
     );
   }
 
-  // Default to Buyer Dashboard for retailers or undefined roles
   return (
     <Suspense fallback={<DashboardSkeleton />}>
       <BuyerDashboard />
@@ -55,17 +53,15 @@ export default function DashboardPage() {
 function DashboardSkeleton() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black p-8 space-y-8">
-      {/* Header Skeleton */}
       <div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
-
-      {/* Stats Grid Skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
+          <div
+            key={i}
+            className="h-32 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse"
+          />
         ))}
       </div>
-
-      {/* Chart/Table Skeleton */}
       <div className="h-96 bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
     </div>
   );

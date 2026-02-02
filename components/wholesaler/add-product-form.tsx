@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { createClient } from '@/lib/supabase-client';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,42 +26,54 @@ export function AddProductForm({ onProductAdded }: { onProductAdded: () => void 
 
     const categories = ['Grains', 'Pulses', 'Oils', 'Spices', 'Sweeteners', 'Beverages', 'Flours'];
 
+   
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        const supabase = createClient();
+    e.preventDefault();
+    setLoading(true);
 
-        try {
-            const { error } = await supabase.from('products').insert({
-                seller_id: user?.id,
-                name: formData.name,
-                category: formData.category,
-                base_price: parseFloat(formData.base_price),
-                unit: formData.unit,
-                min_order_quantity: parseInt(formData.min_order_quantity),
-                description: formData.description,
-                is_active: true,
-                // Default AI values to be updated by trigger or later analysis
-                demand_score: 50,
-                demand_level: 'Medium',
-                expected_margin: 10,
-                supplier_count: 1,
-                season_factor: 1,
-                region_boost: 1,
-                recommendation_reason: 'New arrival'
-            });
+    try {
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/products`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    sellerId: user?.id,
+                    name: formData.name,
+                    category: formData.category,
+                    basePrice: parseFloat(formData.base_price),
+                    unit: formData.unit,
+                    minOrderQuantity: parseInt(formData.min_order_quantity),
+                    description: formData.description
+                }),
+            }
+        );
 
-            if (error) throw error;
-
-            setFormData({ name: '', category: '', base_price: '', unit: 'kg', min_order_quantity: '', description: '', image_url: '' });
-            onProductAdded();
-            alert('Product added successfully!');
-        } catch (error: any) {
-            alert('Error adding product: ' + error.message);
-        } finally {
-            setLoading(false);
+        if (!res.ok) {
+            throw new Error("Failed to add product");
         }
-    };
+
+        setFormData({
+            name: '',
+            category: '',
+            base_price: '',
+            unit: 'kg',
+            min_order_quantity: '',
+            description: '',
+            image_url: ''
+        });
+
+        onProductAdded();
+        alert('Product added successfully!');
+    } catch (error: any) {
+        alert('Error adding product: ' + error.message);
+    } finally {
+        setLoading(false);
+    }
+};
+
 
     return (
         <Card className="p-6 bg-zinc-900/50 border-orange-500/20 backdrop-blur-xl">

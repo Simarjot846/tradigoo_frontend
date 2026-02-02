@@ -2,26 +2,37 @@
 
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { createClient } from "@/lib/supabase-client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { LogOut } from "lucide-react"
 
 export function SecuritySettingsForm({ profile }: { profile: any }) {
 
-    const handlePasswordReset = async () => {
-        const supabase = createClient();
-        if (!profile.email) return;
+   const handlePasswordReset = async () => {
+    if (!profile.email) return;
 
-        const { error } = await supabase.auth.resetPasswordForEmail(profile.email, {
-            redirectTo: `${window.location.origin}/auth/update-password`,
-        });
+    try {
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email: profile.email }),
+            }
+        );
 
-        if (error) {
-            toast.error("Failed to send reset email.");
-        } else {
-            toast.success("Password reset email sent!");
+        if (!res.ok) {
+            throw new Error("Failed to send reset email");
         }
+
+        toast.success("Password reset email sent!");
+    } catch (err) {
+        toast.error("Failed to send reset email.");
     }
+};
+
 
     return (
         <div className="space-y-6">

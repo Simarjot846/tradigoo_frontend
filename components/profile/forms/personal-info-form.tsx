@@ -6,7 +6,7 @@ import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { createClient } from "@/lib/supabase-client"
+
 import {
     Form,
     FormControl,
@@ -52,31 +52,37 @@ export function PersonalInfoForm({ profile, onUpdate }: { profile: any, onUpdate
         },
     })
 
-    async function onSubmit(data: PersonalFormValues) {
-        setIsLoading(true);
-        const supabase = createClient();
+  async function onSubmit(data: PersonalFormValues) {
+    setIsLoading(true);
 
-        try {
-            const { error } = await supabase
-                .from('profiles')
-                .update(data)
-                .eq('id', profile.id);
+    try {
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/profile/personal-info`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                body: JSON.stringify(data),
+            }
+        );
 
-            if (error) throw error;
-
-            toast.success("Profile updated successfully!");
-            onUpdate();
-        } catch (error: any) {
-            console.error("Full Error Object:", error);
-            console.error("Error Message:", error.message);
-            console.error("Error Details:", error.details);
-            console.error("Profile ID:", profile.id);
-
-            toast.error(error.message || "Failed to update profile.");
-        } finally {
-            setIsLoading(false);
+        if (!res.ok) {
+            const err = await res.text();
+            throw new Error(err || "Update failed");
         }
+
+        toast.success("Profile updated successfully!");
+        onUpdate();
+
+    } catch (error: any) {
+        console.error(error);
+        toast.error(error.message || "Failed to update profile.");
+    } finally {
+        setIsLoading(false);
     }
+}
 
     return (
         <Card className="bg-white dark:bg-zinc-900/30 border-zinc-200 dark:border-white/5 text-zinc-900 dark:text-zinc-100 shadow-sm dark:shadow-none">

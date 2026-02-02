@@ -1,4 +1,42 @@
-import { User, Order } from './supabase';
+
+// Local types (replacing Supabase types)
+
+export interface User {
+  id: string;
+  email: string;
+  role: string;
+  name: string;
+  phone: string;
+  business_name: string;
+  location: string;
+  trust_score: number;
+  total_orders: number;
+  successful_orders: number;
+  disputed_orders: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Order {
+  id: string;
+  buyer_id: string;
+  seller_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  total_amount: number;
+  status: string;
+  razorpay_order_id: string | null;
+  razorpay_payment_id: string | null;
+  razorpay_signature: string | null;
+  otp: string;
+  otp_verified: boolean;
+  inspection_deadline: string;
+  dispute_reason: string | null;
+  dispute_evidence: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 // Legacy Product type for mock data (without production fields)
 export interface MockProduct {
@@ -245,61 +283,5 @@ export const mockProducts: MockProduct[] = [
     region_boost: 5,
     season_factor: 8,
     recommendation_reason: 'Home improvement essential.'
-  }
-];
-
-export const mockUsers: User[] = [
-  {
-    id: 'user-1',
-    email: 'retailer@demo.com',
-    role: 'retailer',
-    name: 'Rajesh Kumar',
-    phone: '+91 98765 43210',
-    business_name: 'Kumar General Store',
-    location: 'Mumbai, Maharashtra',
-    trust_score: 850,
-    total_orders: 10,
-    successful_orders: 9,
-    disputed_orders: 0,
-    created_at: '2024-01-15T00:00:00Z',
-    updated_at: '2024-01-15T00:00:00Z'
-  },
-  {
-    id: 'user-2',
-    email: 'wholesaler@demo.com',
-    role: 'wholesaler',
-    name: 'Amit Patel',
-    phone: '+91 98765 43211',
-    business_name: 'Patel Wholesale Traders',
-    location: 'Ahmedabad, Gujarat',
-    trust_score: 920,
-    total_orders: 50,
-    successful_orders: 48,
-    disputed_orders: 1,
-    created_at: '2024-01-10T00:00:00Z',
-    updated_at: '2024-01-10T00:00:00Z'
-  }
-];
-
-export const mockOrders: Order[] = [
-  {
-    id: 'order-1',
-    buyer_id: 'user-1',
-    seller_id: 'user-2',
-    product_id: '1',
-    quantity: 100,
-    unit_price: 85,
-    total_amount: 8500,
-    status: 'DELIVERED',
-    razorpay_order_id: null,
-    razorpay_payment_id: null,
-    razorpay_signature: null,
-    otp: '123456',
-    otp_verified: true,
-    inspection_deadline: '2024-12-20T00:00:00Z',
-    dispute_reason: null,
-    dispute_evidence: null,
-    created_at: '2024-12-15T00:00:00Z',
-    updated_at: '2024-12-19T00:00:00Z'
   }
 ];

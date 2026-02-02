@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { createClient } from "@/lib/supabase-client";
 import { Loader2, CheckCircle, XCircle, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,31 +9,31 @@ import Link from "next/link";
 
 export default function OrderVerificationPage() {
     const params = useParams();
+    const orderId = params?.id as string;
+
     const [loading, setLoading] = useState(true);
     const [order, setOrder] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (!orderId) return;
+
         async function verifyOrder() {
-            if (!params.id) return;
-            const supabase = createClient();
+            try {
+                const res = await fetch(`http://localhost:8080/public/verify/${orderId}`);
+                if (!res.ok) throw new Error();
 
-            // Fetch order details
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*, product:products(*), seller:profiles!seller_id(business_name)')
-                .eq('id', params.id)
-                .single();
-
-            if (error) {
-                setError("Order not found or access denied.");
-            } else {
+                const data = await res.json();
                 setOrder(data);
+            } catch {
+                setError("Order not found or invalid QR code.");
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         }
+
         verifyOrder();
-    }, [params.id]);
+    }, [orderId]);
 
     if (loading) {
         return (
@@ -51,7 +50,7 @@ export default function OrderVerificationPage() {
                 <Card className="max-w-md w-full bg-zinc-900 border-red-900/50 p-8 text-center">
                     <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
                     <h1 className="text-2xl font-bold text-white mb-2">Verification Failed</h1>
-                    <p className="text-zinc-400 mb-6">{error || "Invalid QR Code"}</p>
+                    <p className="text-zinc-400 mb-6">{error}</p>
                     <Link href="/">
                         <Button variant="outline" className="w-full">Return Home</Button>
                     </Link>
@@ -79,26 +78,23 @@ export default function OrderVerificationPage() {
                             <span className="text-zinc-400">Order ID</span>
                             <span className="text-white font-mono">#{order.id.slice(0, 8)}</span>
                         </div>
+
                         <div className="flex items-start gap-4">
                             <div className="bg-zinc-800 p-2 rounded text-zinc-400">
                                 <Package className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="text-white font-semibold">{order.product?.name}</h3>
-                                <p className="text-zinc-400 text-sm">{order.quantity} {order.product?.unit || 'units'}</p>
+                                <h3 className="text-white font-semibold">{order.product.name}</h3>
+                                <p className="text-zinc-400 text-sm">
+                                    {order.quantity} {order.product.unit}
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="p-3 bg-zinc-900 rounded-lg border border-white/5">
-                            <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Status</div>
-                            <div className="text-white capitalize">{order.status.replace(/_/g, ' ')}</div>
-                        </div>
-                        <div className="p-3 bg-zinc-900 rounded-lg border border-white/5">
-                            <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Seller</div>
-                            <div className="text-white truncate">{order.seller?.business_name || 'Verified Seller'}</div>
-                        </div>
+                        <InfoBox label="Status" value={order.status.replace(/_/g, ' ')} />
+                        <InfoBox label="Seller" value={order.seller.businessName} />
                     </div>
 
                     <div className="bg-zinc-900/50 rounded-lg p-4 border border-white/5 space-y-3">
@@ -106,25 +102,22 @@ export default function OrderVerificationPage() {
 
                         <div>
                             <span className="text-xs text-zinc-500 block">Category</span>
-                            <span className="text-zinc-300">{order.product?.category || 'General'}</span>
+                            <span className="text-zinc-300">{order.product.category}</span>
                         </div>
 
                         <div>
                             <span className="text-xs text-zinc-500 block">Description</span>
-                            <p className="text-zinc-300 text-sm leading-relaxed">{order.product?.description || 'No description provided.'}</p>
+                            <p className="text-zinc-300 text-sm">{order.product.description}</p>
                         </div>
 
-                        {order.product?.specs && (
-                            <div>
-                                <span className="text-xs text-zinc-500 block mb-1">Specifications</span>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {Object.entries(order.product.specs).map(([key, val]: any) => (
-                                        <div key={key} className="text-xs bg-black/20 p-1.5 rounded border border-white/5">
-                                            <span className="text-zinc-500 capitalize">{key}: </span>
-                                            <span className="text-zinc-300">{val}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                        {order.product.specs && (
+                            <div className="grid grid-cols-2 gap-2">
+                                {Object.entries(order.product.specs).map(([k, v]: any) => (
+                                    <div key={k} className="text-xs bg-black/20 p-1.5 rounded border border-white/5">
+                                        <span className="text-zinc-500 capitalize">{k}: </span>
+                                        <span className="text-zinc-300">{v}</span>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
@@ -134,13 +127,22 @@ export default function OrderVerificationPage() {
                     <p className="text-zinc-500 text-sm mb-4">
                         Scanned at {new Date().toLocaleTimeString()}
                     </p>
-                    <Link href="/dashboard">
+                    <Link href="/">
                         <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold">
-                            Open Dashboard
+                            Open Website
                         </Button>
                     </Link>
                 </div>
             </Card>
+        </div>
+    );
+}
+
+function InfoBox({ label, value }: any) {
+    return (
+        <div className="p-3 bg-zinc-900 rounded-lg border border-white/5">
+            <div className="text-xs text-zinc-500 uppercase font-bold mb-1">{label}</div>
+            <div className="text-white capitalize">{value}</div>
         </div>
     );
 }
