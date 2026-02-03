@@ -2,13 +2,10 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Filter, Star } from "lucide-react";
 import ProductCard from "@/components/marketplace/product-card";
 
 function MarketplaceContent() {
@@ -21,7 +18,6 @@ function MarketplaceContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState(initialCategory);
   const [priceRange, setPriceRange] = useState([0, 5000]);
-  const [minRating, setMinRating] = useState(0);
   const [moqFilter, setMoqFilter] = useState<string | null>(null);
 
   // Data
@@ -31,7 +27,21 @@ function MarketplaceContent() {
   const ITEMS_PER_PAGE = 24;
   const [hasMore, setHasMore] = useState(true);
 
-  // ✅ Add to cart API
+  // ✅ Emoji helper REQUIRED by ProductCard
+  const getCategoryEmoji = (category: string) => {
+    switch (category?.toLowerCase()) {
+      case "grains": return "🌾";
+      case "pulses": return "🫘";
+      case "oils": return "🛢️";
+      case "spices": return "🌶️";
+      case "sweeteners": return "🍯";
+      case "beverages": return "🥤";
+      case "flours": return "🌾";
+      default: return "📦";
+    }
+  };
+
+  // ✅ Add to cart API (Spring Boot)
   const addToCart = async (productId: string, quantity: number) => {
     try {
       const token = localStorage.getItem("token");
@@ -77,6 +87,7 @@ function MarketplaceContent() {
   // ✅ Client side filtering
   const filteredProducts = products.filter((p) => {
     const searchLower = searchQuery.toLowerCase().trim();
+
     const matchesSearch =
       !searchLower ||
       p.name?.toLowerCase().includes(searchLower) ||
@@ -157,6 +168,7 @@ function MarketplaceContent() {
                 key={product.id}
                 product={product}
                 addToCart={addToCart}
+                getCategoryEmoji={getCategoryEmoji}   // ✅ FIX
               />
             ))}
           </div>

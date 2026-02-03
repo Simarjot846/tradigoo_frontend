@@ -7,10 +7,10 @@ import { AuthProvider } from "@/lib/auth-context";
 import { RoleThemeProvider } from "@/lib/theme-context";
 import { CartProvider } from "@/lib/cart-context";
 
-import { Navbar } from "@/components/navbar";
 import { Chatbot } from "@/components/chatbot";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemePersistence } from "@/components/theme-persistence";
+import ClientNavbar from "@/components/client-navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +34,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -45,16 +47,14 @@ export default function RootLayout({
             <RoleThemeProvider>
               <CartProvider>
 
-                {/* MUST be here — no Suspense */}
-                <Navbar />
+                {/* ✅ Navbar (client side safe) */}
+                <ClientNavbar />
 
                 <ThemePersistence />
 
                 {children}
 
-                {/* Needs user + role + cart */}
                 <Chatbot />
-
                 <Toaster />
 
               </CartProvider>

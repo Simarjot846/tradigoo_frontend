@@ -106,7 +106,8 @@ export function Navbar() {
               className="hidden xl:flex flex-col items-start leading-tight cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/5 p-2 rounded-lg transition-colors min-w-[140px] ml-4 border border-transparent hover:border-zinc-200 dark:hover:border-white/10"
             >
               <div className="flex items-center text-xs text-zinc-500 dark:text-zinc-400 ml-5">
-                Deliver to {user.name.split(' ')[0]}
+                Deliver to {user?.name?.split(' ')[0] || 'Partner'}
+
               </div>
               <div className="flex items-center font-bold text-sm text-zinc-800 dark:text-zinc-200">
                 <MapPin className="w-4 h-4 mr-1 text-blue-500" />
