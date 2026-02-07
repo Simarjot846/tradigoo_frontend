@@ -35,26 +35,27 @@ export default function InventoryPage() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
   const fetchProducts = async () => {
-    try {
-      const token = localStorage.getItem("token");
+  try {
+    const token = localStorage.getItem("token");
 
-      const res = await fetch("http://localhost:8080/products/my", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const res = await fetch("http://localhost:8080/products/my", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      const data = await res.json();
-      setProducts(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const data = await res.json();
 
+    // ✅ SAFETY CHECK
+    setProducts(Array.isArray(data) ? data : []);
+  } catch (e) {
+    console.error(e);
+    setProducts([]); // fallback
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
     fetchProducts();
   }, []);
